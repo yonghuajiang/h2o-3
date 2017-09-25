@@ -154,6 +154,72 @@ def np_comparison_check(h2o_data, np_data, num_elements):
         assert np.absolute(h2o_val - np_val) < 1e-5, \
             "failed comparison check! h2o computed {0} and numpy computed {1}".format(h2o_val, np_val)
 
+# perform h2o predict and mojo predict.  Frames containing h2o prediction is returned and mojo predict are
+# returned.
+def mojo_predict(model,tmpdir, mojoname):
+    """
+    perform h2o predict and mojo predict.  Frames containing h2o prediction is returned and mojo predict are returned.
+    It is assumed that the input data set is saved as in.csv in tmpdir directory.
+
+    :param model: h2o model where you want to use to perform prediction
+    :param tmpdir: directory where your mojo zip files are stired
+    :param mojoname: name of your mojo zip file.
+    :return: the h2o prediction frame and the mojo prediction frame
+    """
+    newTest = h2o.import_file(os.path.join(tmpdir, 'in.csv'))   # Make sure h2o and mojo use same in.csv
+    predict_h2o = model.predict(newTest)
+
+    # load mojo and have it do predict
+    outFileName = os.path.join(tmpdir, 'out_mojo.csv')
+    genJarDir = str.split(str(tmpdir),'/')
+    genJarDir = '/'.join(genJarDir[0:genJarDir.index('h2o-py')])    # locate directory of genmodel.jar
+    java_cmd = ["java", "-ea", "-cp", os.path.join(genJarDir, "h2o-assemblies/genmodel/build/libs/genmodel.jar"),
+                "-Xmx12g", "-XX:MaxPermSize=2g", "-XX:ReservedCodeCacheSize=256m", "hex.genmodel.tools.PredictCsv",
+                "--input", os.path.join(tmpdir, 'in.csv'), "--output",
+                outFileName, "--mojo", os.path.join(tmpdir, mojoname) + ".zip", "--decimal"]
+    p = subprocess.Popen(java_cmd, stdout=PIPE, stderr=STDOUT)
+    o, e = p.communicate()
+    pred_mojo = h2o.import_file(os.path.join(tmpdir, 'out_mojo.csv'), header=1)  # load mojo prediction into a frame and compare
+    return predict_h2o, pred_mojo
+
+# perform pojo predict.  Frame containing pojo predict is returned.
+def pojo_predict(model, tmpdir, pojoname):
+    h2o.download_pojo(model, path=tmpdir)
+    h2o_genmodel_jar = os.path.join(tmpdir, "h2o-genmodel.jar")
+    java_file = os.path.join(tmpdir, pojoname + ".java")
+
+    in_csv = (os.path.join(tmpdir, 'in.csv'))   # import the test dataset
+    print("Compiling Java Pojo")
+    javac_cmd = ["javac", "-cp", h2o_genmodel_jar, "-J-Xmx12g", "-J-XX:MaxPermSize=256m", java_file]
+    subprocess.check_call(javac_cmd)
+
+    out_pojo_csv = os.path.join(tmpdir, "out_pojo.csv")
+    cp_sep = ";" if sys.platform == "win32" else ":"
+    java_cmd = ["java", "-ea", "-cp", h2o_genmodel_jar + cp_sep + tmpdir, "-Xmx12g", "-XX:MaxPermSize=2g",
+            "-XX:ReservedCodeCacheSize=256m", "hex.genmodel.tools.PredictCsv",
+            "--pojo", pojoname, "--input", in_csv, "--output", out_pojo_csv, "--separator", ',', "--decimal"]
+
+    p = subprocess.Popen(java_cmd, stdout=PIPE, stderr=STDOUT)
+    o, e = p.communicate()
+    print("Java output: {0}".format(o))
+    assert os.path.exists(out_pojo_csv), "Expected file {0} to exist, but it does not.".format(out_pojo_csv)
+    predict_pojo = h2o.upload_file(path=out_pojo_csv)
+    return predict_pojo
+
+
+# load mojo and have it do predict
+    outFileName = os.path.join(tmpdir, 'out_mojo.csv')
+    genJarDir = str.split(str(tmpdir),'/')
+    genJarDir = '/'.join(genJarDir[0:genJarDir.index('h2o-py')])    # locate directory of genmodel.jar
+    java_cmd = ["java", "-ea", "-cp", os.path.join(genJarDir, "h2o-assemblies/genmodel/build/libs/genmodel.jar"),
+                "-Xmx12g", "-XX:MaxPermSize=2g", "-XX:ReservedCodeCacheSize=256m", "hex.genmodel.tools.PredictCsv",
+                "--input", os.path.join(tmpdir, 'in.csv'), "--output",
+                outFileName, "--mojo", os.path.join(tmpdir, pojoname)+".zip", "--decimal"]
+    p = subprocess.Popen(java_cmd, stdout=PIPE, stderr=STDOUT)
+    o, e = p.communicate()
+    pred_mojo = h2o.import_file(os.path.join(tmpdir, 'out_mojo.csv'), header=1)  # load mojo prediction into a frame and compare
+    return predict_h2o, pred_mojo
+
 def javapredict(algo, equality, train, test, x, y, compile_only=False, separator=",", setInvNumNA=False,**kwargs):
     print("Creating model in H2O")
     if algo == "gbm": model = H2OGradientBoostingEstimator(**kwargs)
