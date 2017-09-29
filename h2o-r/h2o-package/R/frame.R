@@ -3672,14 +3672,16 @@ h2o.merge <- function(x, y, by=intersect(names(x), names(y)), by.x=by, by.y=by, 
 #'
 #' @param x The H2OFrame input to be sorted.
 #' @param \dots The column names to sort by.
+#' @param sortDir The sorting direction with ASC (ascending and default) or DESC (descending).
 #'
 #' @export
-h2o.arrange <- function(x, ...) {
+h2o.arrange <- function(x, ..., sortDir="ASC") {
   by = as.character(substitute(list(...))[-1])
   if (!length(by)) stop("Please provide at least one column to sort by")
   by = checkMatch(by, names(x))
   if (anyDuplicated(by)) stop("Some duplicate column names have been provided")
-  .newExpr("sort", x, by-1L)
+  if ((! "ASC" %in% sortDir) && (! "DESC" %in% sortDir)) stop('sortDir must be "ASC" (ascending) or "DESC" (descending).')
+  .newExpr("sort", x, by-1L, sortDir)
 }
 
 

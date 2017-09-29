@@ -45,7 +45,7 @@ public class SortTest extends TestUtil {
     try {
       fr = buildFrame(1000,10);
       fr.insertVec(0,"row",fr.remove(2));
-      res = Merge.sort(fr,new int[]{1,2});
+      res = Merge.sort(fr,new int[]{1,2}, 0);
       res.add("row",res.remove(0));
       new CheckSort().doAll(res);
     } finally {
@@ -261,6 +261,24 @@ public class SortTest extends TestUtil {
     }
   }
 
+  @Test public void TestSortIntegersDescend() throws IOException {
+    Scope.enter();
+    Frame fr, sortedInt;
+    try {
+      fr = parse_test_file("smalldata/synthetic/integerFrame.csv");
+      sortedInt = fr.sort(new int[]{0}, "ASC");
+      Scope.track(fr);
+      Scope.track(sortedInt);
+
+      long numRows = fr.numRows();
+      assert numRows==sortedInt.numRows();
+      for (long index = 1; index < numRows; index++) {
+        assertTrue(sortedInt.vec(0).at8(index) >= sortedInt.vec(0).at8(index));
+      }
+    } finally {
+      Scope.exit();
+    }
+  }
 
   private static void testSort(Frame frSorted, Frame originalF, int colIndex) throws IOException {
     Scope.enter();

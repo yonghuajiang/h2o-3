@@ -1787,22 +1787,24 @@ class H2OFrame(object):
         assert_is_type(by, str, int, [str, int])
         return GroupBy(self, by)
 
-    def sort(self, by):
+    def sort(self, by, dir="ASC"):
         """
         Return a new Frame that is sorted by column(s) in ascending order. A fully distributed and parallel sort.
         However, the original frame must not contain any String columns.
 
         :param by: The column to sort by (either a single column name, or a list of column names, or
             a list of column indices)
+        :param dir: String representing sorting direction, ASC for ascending and DESC for descending.  Default is ASC
 
-        :return: a new sorted Frame
+        :return:  a new sorted Frame
         """
         assert_is_type(by, str, int, [str, int])
         if type(by) != list: by = [by]
         for c in by:
             if self.type(c) not in ["enum","time","int","real"]:
                 raise H2OValueError("Sort by column: " + str(c) + " not of enum, time, int, or real type")
-        return H2OFrame._expr(expr=ExprNode("sort",self,by))
+        assert (dir == 'ASC') or (dir == 'DESC'), "dir must be either ASC (ascending) or DESC (descending)."
+        return H2OFrame._expr(expr=ExprNode("sort",self,by,dir))
 
     def fillna(self,method="forward",axis=0,maxlen=1):
         """

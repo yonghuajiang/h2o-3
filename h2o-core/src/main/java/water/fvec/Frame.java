@@ -1580,5 +1580,8 @@ public class Frame extends Lockable<Frame> {
 
   /** Sort rows of a frame, using the set of columns as keys.
    *  @return Copy of frame, sorted */
-  public Frame sort( int[] cols ) { return Merge.sort(this,cols); }
+  public Frame sort( int[] cols ) { return sort(cols, "ASC"); }
+  public Frame sort(int[] cols, String sortDir) {
+    return Merge.sort(this, cols, sortDir=="ASC"?0:1);
+  }
 }

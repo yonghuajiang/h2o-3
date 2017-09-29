@@ -17,15 +17,17 @@ import java.util.Arrays;
 public class AstSort extends AstPrimitive {
   @Override public String[] args() { return new String[]{"ary","cols"}; }
   @Override public String str(){ return "sort";}
-  @Override public int nargs() { return 1+2; } // (sort ary [cols])
+  @Override public int nargs() { return 1+2+1; } // (sort ary [cols] ASC(or DESC))
 
   @Override public ValFrame apply(Env env, Env.StackHelp stk, AstRoot asts[]) {
     Frame fr = stk.track(asts[1].exec(env)).getFrame();
     int[] cols = ((AstParameter)asts[2]).columns(fr.names());
+    String sortDir = asts[3].str();
+    int sortD = sortDir.equals("ASC")?0:1;
     String[] colTypes = fr.typesStr();
     if (Arrays.asList(colTypes).contains("String"))
       throw new IllegalArgumentException("Input frame contains String columns.  Remove String columns before " +
               "calling sort again.");
-    return new ValFrame(Merge.sort(fr,cols));
+    return new ValFrame(Merge.sort(fr,cols, sortD));
   }
 }
