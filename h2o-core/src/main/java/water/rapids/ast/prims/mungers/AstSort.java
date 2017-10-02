@@ -22,7 +22,10 @@ public class AstSort extends AstPrimitive {
   @Override public ValFrame apply(Env env, Env.StackHelp stk, AstRoot asts[]) {
     Frame fr = stk.track(asts[1].exec(env)).getFrame();
     int[] cols = ((AstParameter)asts[2]).columns(fr.names());
-    String sortDir = asts[3].str();
+    String sortDir = "ASC"; // assign sort direction to ASC by default
+    if (asts.length == 4) {
+      sortDir = asts[3].str();
+    }
     int sortD = sortDir.equals("ASC")?0:1;
     String[] colTypes = fr.typesStr();
     if (Arrays.asList(colTypes).contains("String"))
