@@ -45,7 +45,7 @@ public class SortTest extends TestUtil {
     try {
       fr = buildFrame(1000,10);
       fr.insertVec(0,"row",fr.remove(2));
-      res = Merge.sort(fr,new int[]{1,2}, 0);
+      res = Merge.sort(fr,new int[]{1,2});
       res.add("row",res.remove(0));
       new CheckSort().doAll(res);
     } finally {
@@ -266,7 +266,7 @@ public class SortTest extends TestUtil {
     Frame fr, sortedInt;
     try {
       fr = parse_test_file("smalldata/synthetic/integerFrame.csv");
-      sortedInt = fr.sort(new int[]{0}, "ASC");
+      sortedInt = fr.sort(new int[]{0}, new boolean[]{false});
       Scope.track(fr);
       Scope.track(sortedInt);
 

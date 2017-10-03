@@ -3668,20 +3668,28 @@ h2o.merge <- function(x, y, by=intersect(names(x), names(y)), by.x=by, by.y=by, 
 }
 
 
-#' Sorts H2OFrame by the columns specified. H2OFrame should not contain any String columns.  Otherwise, an error will be thrown.  Returns a new H2OFrame, like dplyr::arrange.
+#' Sorts H2OFrame by the columns specified. H2OFrame should not contain any String columns.  Otherwise, an error will be thrown.  To sort column cx in descending order, do desc(c1).  Returns a new H2OFrame, like dplyr::arrange.
 #'
 #' @param x The H2OFrame input to be sorted.
 #' @param \dots The column names to sort by.
-#' @param sortDir The sorting direction with ASC (ascending and default) or DESC (descending).
 #'
 #' @export
-h2o.arrange <- function(x, ..., sortDir="ASC") {
-  by = as.character(substitute(list(...))[-1])
+h2o.arrange <- function(x, ...) {
+  by <- as.character(substitute(list(...))[-1])
+  ascend <- as.character(substitute(list(...))[-1]) # initialize to same length as by
   if (!length(by)) stop("Please provide at least one column to sort by")
-  by = checkMatch(by, names(x))
+  for (index in range(1, length(by))) {
+    if (sapply("desc", grepl, by[index])) {
+      ascend[index]<-"FALSE"
+      trueName <- sub("\\).*", "", sub(".*\\(", "", by[index]))
+      by[index] <- trueName
+    } else {
+      ascend[index]<-"TRUE"
+    }
+  }
+  by <- checkMatch(by, names(x))
   if (anyDuplicated(by)) stop("Some duplicate column names have been provided")
-  if ((! "ASC" %in% sortDir) && (! "DESC" %in% sortDir)) stop('sortDir must be "ASC" (ascending) or "DESC" (descending).')
-  .newExpr("sort", x, by-1L, sortDir)
+  .newExpr("sort", x, by-1L, ascend)
 }
 
 
