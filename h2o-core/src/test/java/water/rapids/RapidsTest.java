@@ -351,7 +351,7 @@ public class RapidsTest extends TestUtil {
       r = new Frame(r);
       DKV.put(r);
       System.out.println(r);
-      String x = String.format("(merge %s %s 1 0 [] [] \"auto\")",l._key,r._key);
+      String x = String.format("(merge %s %s 1 0 [] [] \"hash\")",l._key,r._key);
       Val res = Rapids.exec(x);
       f = res.getFrame();
       System.out.println(f);
