@@ -37,7 +37,12 @@ def detectChanges() {
     }
   }
 
-  return changesMap
+  return [
+    py: true,
+    r: true,
+    js: false,
+    java: false
+  ]
 }
 
 def markAllForRun(map) {
